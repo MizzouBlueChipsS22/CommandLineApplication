@@ -6,7 +6,21 @@ from datetime import date
 import pandas as pd
 import pandas_ta as ta
 from prettytable import PrettyTable
+import eventlet
+import socketio
 
+sio = socketio.Server(cors_allowed_origins='*')
+app = socketio.WSGIApp(sio, static_files={
+    '/': {'content_type': 'text/html', 'filename': 'index.html'}
+})
+
+@sio.event
+def connect(sid, environ):
+    return "connection", True
+
+@sio.on('monitor')
+def exampleFunction(sid, data):
+    print("test\n")
 
 class OptionHolder:
 
@@ -121,7 +135,7 @@ def get_ideal_buy_sell_magic(option):
     option.IdealSell = round(option.AskPrice - (option.CurrentSpread * .2), 3)
 
 
-if __name__ == '__main__':
+def main():
 
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -224,3 +238,8 @@ if __name__ == '__main__':
                  option.IV, str(option.BuyScore) + " / 8"])
 
         print(outputTable)
+
+
+if __name__ == '__main__':
+    main()
+    eventlet.wsgi.server(eventlet.listen(('', 65430)), app)
